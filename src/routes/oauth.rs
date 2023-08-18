@@ -8,7 +8,6 @@ use axum::{
     middleware::{Next}
 };
 use oauth2::{basic::BasicClient, AuthorizationCode, TokenResponse, reqwest::async_http_client};
-use s3::creds;
 use time::Duration as TimeDuration;
 use axum_extra::extract::cookie::{Cookie, PrivateCookieJar};
 use chrono::{Duration, Local};
