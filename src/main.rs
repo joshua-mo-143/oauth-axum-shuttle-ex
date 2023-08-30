@@ -52,25 +52,31 @@ async fn axum(
 
     let oauth_client = build_oauth_client(oauth_id.clone(), oauth_secret);
 
-    let auth_router = Router::new()
-        .route("/auth/google_callback", get(oauth::google_callback));
-
-    let protected_router = Router::new()
-        .route("/", get(oauth::protected))
-        .route_layer(middleware::from_fn_with_state(state.clone(), oauth::check_authenticated));
-
-    let homepage_router = Router::new()
-        .route("/", get(homepage))
-        .layer(Extension(oauth_id));
-
-    let router = Router::new()
-        .nest("/api", auth_router)
-        .nest("/protected", protected_router)
-        .nest("/", homepage_router)
-        .layer(Extension(oauth_client))
-        .with_state(state);
+    let router = init_router(state, oauth_client);
 
     Ok(router.into())
+}
+
+fn init_router(state: AppState, oauth_client: BasicClient) -> Router {
+let auth_router = Router::new()
+    .route("/auth/google_callback", get(oauth::google_callback));
+
+let protected_router = Router::new()
+    .route("/", get(oauth::protected))
+    .route_layer(middleware::from_fn_with_state(state.clone(), oauth::check_authenticated));
+
+let homepage_router = Router::new()
+    .route("/", get(homepage))
+    .layer(Extension(oauth_id));
+
+Router::new()
+    .nest("/api", auth_router)
+    .nest("/protected", protected_router)
+    .nest("/", homepage_router)
+    .layer(Extension(oauth_client))
+    .with_state(state);
+
+
 }
 
 fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {

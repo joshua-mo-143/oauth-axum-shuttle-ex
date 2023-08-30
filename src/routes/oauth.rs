@@ -64,7 +64,8 @@ pub async fn google_callback(
         .bind(profile.email.clone())
         .execute(&state.db)
         .await {
-        error!("Error while trying to make account: {e}")
+        error!("Error while trying to make account: {e}");
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error while creating user: {e}")))
     }
     
     if let Err(e) = sqlx::query("INSERT INTO sessions (user_id, session_id, expires_at) VALUES (
@@ -78,7 +79,8 @@ pub async fn google_callback(
         .bind(max_age)
         .execute(&state.db)
         .await {
-        error!("Error while trying to make session: {e}");
+        error!("Error while trying to make session: {e}"); 
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error while creating user: {e}")))
     }
 
     Ok((
@@ -99,7 +101,7 @@ pub async fn check_authenticated<B>(
     next: Next<B>
 ) -> Result<impl IntoResponse, impl IntoResponse> {
     let Some(cookie) = jar.get("sid").map(|cookie| cookie.value().to_owned()) else {
-        return Err((StatusCode::FORBIDDEN, "Forbidden!".to_string()));
+        return Err((StatusCode::UNAUTHORIZED, "Unauthorized!".to_string()));
     };
 
     let res = match sqlx::query_as::<_, UserProfile>("SELECT 
@@ -113,7 +115,7 @@ pub async fn check_authenticated<B>(
         .await {
         Ok(res) => res,
         Err(e) => {
-                return Err((StatusCode::FORBIDDEN, e.to_string()))
+                return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
             }
     };
 
