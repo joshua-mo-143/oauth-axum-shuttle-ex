@@ -3,7 +3,7 @@ use crate::AppState;
 use axum::{
     extract::{State, Query},
     http::{Request, StatusCode},
-    response::{IntoResponse, Redirect, Html},
+    response::{IntoResponse, Redirect},
     Extension,
     middleware::{Next}
 };

@@ -1,6 +1,6 @@
 use axum::{
     extract::FromRef,
-    routing::{get, post},
+    routing::{get},
     Router,
     Extension,
     response::Html
@@ -12,7 +12,7 @@ use axum::middleware;
 use shuttle_secrets::SecretStore;
 use sqlx::PgPool;
 use oauth2::{AuthUrl, TokenUrl, ClientId, RedirectUrl, basic::BasicClient, ClientSecret};
-use std::path::PathBuf;
+
 
 
 pub mod routes;
@@ -52,12 +52,12 @@ async fn axum(
 
     let oauth_client = build_oauth_client(oauth_id.clone(), oauth_secret);
 
-    let router = init_router(state, oauth_client);
+    let router = init_router(state, oauth_client, oauth_id);
 
     Ok(router.into())
 }
 
-fn init_router(state: AppState, oauth_client: BasicClient) -> Router {
+fn init_router(state: AppState, oauth_client: BasicClient, oauth_id: String) -> Router {
 let auth_router = Router::new()
     .route("/auth/google_callback", get(oauth::google_callback));
 
@@ -74,7 +74,7 @@ Router::new()
     .nest("/protected", protected_router)
     .nest("/", homepage_router)
     .layer(Extension(oauth_client))
-    .with_state(state);
+    .with_state(state)
 
 
 }
